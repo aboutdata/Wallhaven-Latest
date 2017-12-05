@@ -1,9 +1,15 @@
 package com.anhao.spring.dao;
 
+import com.anhao.spring.enums.PhotoStatus;
+import com.anhao.spring.rest.Pageable;
 import org.apache.ibatis.annotations.Insert;
 
 import com.anhao.spring.domain.Photos;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 /**
  * INSERT INTO biz.xx_photos ( id, create_date, modify_date, large, MEDIUM,
@@ -18,7 +24,6 @@ import org.apache.ibatis.annotations.Select;
  * "http://aboutdata.me" );
  *
  * @author Administrator
- *
  */
 public interface JobPhotosDAO {
 
@@ -32,6 +37,23 @@ public interface JobPhotosDAO {
     @Select("SELECT id FROM biz.xx_photos WHERE wallhaven = #{wallhaven}")
     public String findByWallpaperId(String wallhaven);
 
-        //@Select("SELECT id FROM biz.xx_photos WHERE wallhaven = #{wallhaven}")
+    //@Select("SELECT id FROM biz.xx_photos WHERE wallhaven = #{wallhaven}")
     //public String findByWallpaperId(String wallhaven);
+
+    @Select("SELECT" +
+            " id,create_date,modify_date,large,MEDIUM,orders,thumbnail,source,title,width,height,size,album_id,member_id,wallhaven,storage_host,status" +
+            " FROM xx_photos" +
+            " WHERE status = 'UNASSIGNED' " +
+            " LIMIT ${pageNow},${pageSize}")
+    public List<Photos> findByPage(Pageable pageable);
+
+    @Select(" SELECT" +
+            " count(*)" +
+            " FROM xx_photos" +
+            " WHERE status = 'UNASSIGNED'")
+    public Long countByPage(Pageable pageable);
+
+    @Update(value = "update xx_photos set status =#{status} where id=#{id}")
+    public int markStatus(@Param("id") String id, @Param("status") PhotoStatus status);
+
 }

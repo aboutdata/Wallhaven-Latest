@@ -5,22 +5,29 @@
  */
 package com.anhao.spring.service.impl;
 
+import com.aliyun.oss.OSSClient;
+import com.aliyun.oss.model.PutObjectResult;
 import com.anhao.spring.dao.JobPhotosDAO;
 import com.anhao.spring.dao.PhotosTagDao;
 import com.anhao.spring.dao.TagDao;
 import com.anhao.spring.domain.Photos;
 import com.anhao.spring.domain.PhotosTag;
+import com.anhao.spring.enums.PhotoStatus;
+import com.anhao.spring.rest.Page;
+import com.anhao.spring.rest.Pageable;
 import com.anhao.spring.service.PhotosColorsService;
 import com.anhao.spring.service.PhotosService;
 import com.anhao.spring.utils.EasyImage;
 import com.anhao.spring.wallhaven.StorageService;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Resource;
-import org.apache.commons.lang.StringUtils;
+
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,10 +35,12 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
- *
  * @author Administrator
  */
 @Service
@@ -46,6 +55,9 @@ public class PhotosServiceImpl implements PhotosService {
     private TagDao tagDAO;
 
     @Resource
+    private OSSClient ossClient;
+
+    @Resource
     private PhotosTagDao photostagDAO;
 
     @Resource
@@ -53,6 +65,31 @@ public class PhotosServiceImpl implements PhotosService {
 
     @Resource
     private PhotosColorsService photosColorsService;
+
+    @Override
+    public Page<Photos> find(Pageable pageable) {
+        List<Photos> list = jobPhotosDAO.findByPage(pageable);
+        Long count = jobPhotosDAO.countByPage(pageable);
+        return new Page(list, count, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void markStatus(String id, PhotoStatus status) {
+        jobPhotosDAO.markStatus(id, status);
+    }
+
+    @Override
+    public void upload(Photos photos) throws IOException {
+        String fastDir = "/data/fastdfs/storage/data";
+        String[] content = photos.getSource().split("group1/M00");
+        String filePath = fastDir + content[1];
+        FileSystemResource fileSystemResource = new FileSystemResource(filePath);
+        String filenameExtension = StringUtils.getFilenameExtension(fileSystemResource.getFilename());
+        String fileId = "wallbase-" + photos.getWallhaven().concat(".") + filenameExtension;
+        //ClassPathResource classPathResource = new ClassPathResource("static/images/m15.jpg");
+        PutObjectResult putObjectRequest = ossClient.putObject("wallbasetv", fileId, fileSystemResource.getInputStream());
+    }
 
     @Override
     public void process(Document doc) {
@@ -65,7 +102,7 @@ public class PhotosServiceImpl implements PhotosService {
              */
             String tempUUID = jobPhotosDAO.findByWallpaperId(wallpaperId);
 
-            if (StringUtils.isNotEmpty(tempUUID)) {
+            if (StringUtils.hasText(tempUUID)) {
                 logger.info("wallpapers id {} thumbnail  exist.", wallpaperId);
                 //如果本地数据中已经存在该wallpaperID的数据 就不再处理
                 continue;
@@ -110,7 +147,7 @@ public class PhotosServiceImpl implements PhotosService {
                 photos.setThumbnail(thumbnailPath);
                 photos.setAlbum_id("ff8081814f7e13d8014f7e18a95a0000");
                 photos.setMember_id("1");
-                
+
 
                 photos.setWallhaven(wallpaperId);
                 photos.setStorage_host("http://123.57.240.11");

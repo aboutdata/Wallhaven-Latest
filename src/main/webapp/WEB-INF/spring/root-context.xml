@@ -26,6 +26,12 @@
 			expression="org.springframework.stereotype.Controller" />
 	</context:component-scan>
 
+	<bean id="ossClient" class="com.aliyun.oss.OSSClient">
+		<constructor-arg name="endpoint" value="http://oss-cn-beijing.aliyuncs.com"/>
+		<constructor-arg name="accessKeyId" value="LTAITIbWq1z5lFrj"/>
+		<constructor-arg name="secretAccessKey" value="48V6vSgYVXWaq9GuCANSqiNSpA9xnQ"/>
+	</bean>
+
 	<bean id="taskExecutor"
 		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
 		<property name="corePoolSize" value="50" />
