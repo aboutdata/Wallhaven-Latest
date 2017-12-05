@@ -1,10 +1,7 @@
 package com.anhao.spring.schedule;
 
-import com.anhao.spring.dao.JobPhotosDAO;
-import com.anhao.spring.dao.PhotosTagDao;
-import com.anhao.spring.dao.TagDao;
+import com.anhao.spring.service.PhotosService;
 import com.anhao.spring.task.crawlTask;
-import com.anhao.spring.wallhaven.StorageService;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,45 +27,35 @@ public class WallHavenSchedule {
     private ThreadPoolTaskExecutor taskExecutor;
 
     @Resource
-    private JobPhotosDAO jobPhotosDAO;
-
-    @Resource
-    private TagDao tagDAO;
-
-    @Resource
-    private PhotosTagDao photostagDAO;
-
-    @Resource
-    private StorageService storageService;
+    private PhotosService photosService;
 
     private int page = 1;
 
     /**
      * 截至时间20150922
-     * 
+     *
      */
-    private int totalPages = 6972;
+    private int totalPages = 2;
 
     // 每20秒执行一次
-    //@Scheduled(cron = "*/20 * * * * ?")
+    @Scheduled(cron = "*/20 * * * * ?")
     public void myTest() {
         System.out.println("=============================================");
         System.out.println("ActiveCount :" + taskExecutor.getActiveCount());
         System.out.println("PoolSize :" + taskExecutor.getPoolSize());
         System.out.println("CorePoolSize :" + taskExecutor.getCorePoolSize());
         System.out.println("=============================================");
-
-        if (taskExecutor.getActiveCount() < 10) {
-            System.out.println("当前页:" + page);
-
-            if (page <= totalPages) {
-                for (int i = page; i < page + 5; i++) {
-                    taskExecutor.execute(new crawlTask(i, photostagDAO, jobPhotosDAO, tagDAO, storageService));
-                }
-                page = page + 5;
-            } else {
-                logger.info("抓取页码结束 {}", page);
-            }
-        }
+        taskExecutor.execute(new crawlTask(1, photosService));
+//        if (taskExecutor.getActiveCount() < 10) {
+//            System.out.println("当前页:" + page);
+//            if (page <= totalPages) {
+//                for (int i = page; i < page + 5; i++) {
+//                    taskExecutor.execute(new crawlTask(i, photosService));
+//                }
+//                page = page + 5;
+//            } else {
+//                logger.info("抓取页码结束 {}", page);
+//            }
+//        }
     }
 }
