@@ -88,7 +88,10 @@ public class PhotosServiceImpl implements PhotosService {
         String filenameExtension = StringUtils.getFilenameExtension(fileSystemResource.getFilename());
         String fileId = "wallbase-" + photos.getWallhaven().concat(".") + filenameExtension;
         //ClassPathResource classPathResource = new ClassPathResource("static/images/m15.jpg");
-        PutObjectResult putObjectRequest = ossClient.putObject("wallbasetv", fileId, fileSystemResource.getInputStream());
+        PutObjectResult putObjectRequest = ossClient.putObject("wallhaven", fileId, fileSystemResource.getInputStream());
+
+        //更新状态
+        this.markStatus(photos.getId(), PhotoStatus.INDEXED);
     }
 
     @Override
